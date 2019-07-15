@@ -402,35 +402,16 @@ EXPORT_SYMBOL(msm_set_restart_mode);
 
 static void msm_restart_prepare(const char *cmd)
 {
-	bool need_warm_reset = false;
 	u8 reason = PON_RESTART_REASON_UNKNOWN;
 	/* Write download mode flags if we're panic'ing
 	 * Write download mode flags if restart_mode says so
 	 * Kill download mode if master-kill switch is set
 	 */
 
-	if (cmd != NULL && !strcmp(cmd, "qcom_dload"))
-		restart_mode = RESTART_DLOAD;
-
-	set_dload_mode(download_mode &&
-			(in_panic || restart_mode == RESTART_DLOAD));
-
-	if (qpnp_pon_check_hard_reset_stored()) {
-		/* Set warm reset as true when device is in dload mode */
-		if (get_dload_mode() ||
-			((cmd != NULL && cmd[0] != '\0') &&
-			!strcmp(cmd, "edl")))
-			need_warm_reset = true;
-	} else {
-		need_warm_reset = (get_dload_mode() ||
-				(cmd != NULL && cmd[0] != '\0'));
-	}
-
-	if (force_warm_reboot)
-		pr_info("Forcing a warm reset of the system\n");
+	set_dload_mode(false);
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
-	if (force_warm_reboot || need_warm_reset)
+	if (in_panic)
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
 	else
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
